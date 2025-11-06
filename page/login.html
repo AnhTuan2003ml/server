@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập OTP Tinh Tế</title>
+    <link rel="stylesheet" href="/page/css/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            
+            <div class="logo">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            
+            <h2 class="title" id="form-title">Đăng nhập tài khoản</h2>
+            <p class="subtitle" id="form-subtitle">Sử dụng địa chỉ Gmail của bạn</p>
+            
+            <form id="step-email" class="login-form">
+                <div class="input-group">
+                    <i class="fas fa-envelope icon"></i>
+                    <input type="email" id="email" required placeholder=" ">
+                    <label for="email">Địa chỉ Email (Gmail)</label>
+                </div>
+                
+                <div class="action-group">
+                    <a href="#" class="link-secondary">Tạo tài khoản mới</a>
+                    <button type="button" class="btn-primary" onclick="showOtpStep()">Lấy Mã Đăng Nhập</button>
+                </div>
+            </form>
+
+            <form id="step-otp" class="login-form hidden">
+                <p class="otp-instruction">Mã đăng nhập (OTP) đã được gửi đến email của bạn.</p>
+                <div class="input-group">
+                    <i class="fas fa-key icon"></i>
+                    <input type="text" id="otp-code" required placeholder=" " maxlength="6">
+                    <label for="otp-code">Mã Đăng Nhập (6 chữ số)</label>
+                </div>
+                
+                <div class="action-group">
+                    <a href="#" class="link-secondary" onclick="resendOtp()">Gửi lại mã</a>
+                    <button type="submit" class="btn-primary">Đăng Nhập</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Lưu email để dùng khi resend
+        let currentEmail = '';
+
+        async function showOtpStep() {
+            const emailInput = document.getElementById('email');
+            const email = emailInput.value.trim();
+            
+            // Kiểm tra email hợp lệ
+            if (!emailInput.checkValidity() || !email) {
+                alert('Vui lòng nhập địa chỉ email hợp lệ.');
+                return;
+            }
+
+            // Lưu email
+            currentEmail = email;
+
+            // Lấy nút để hiển thị loading state
+            const btn = document.querySelector('#step-email .btn-primary');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Đang gửi...';
+
+            try {
+                // Gọi API creat_otp
+                const response = await fetch('/creat_otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Chuyển sang bước nhập OTP
+                    document.getElementById('step-email').classList.add('hidden');
+                    document.getElementById('step-otp').classList.remove('hidden');
+                    
+                    // Cập nhật tiêu đề
+                    document.getElementById('form-title').textContent = 'Nhập Mã Xác Minh';
+                    document.getElementById('form-subtitle').textContent = 'Kiểm tra hộp thư đến của bạn.';
+                    
+                    // Focus vào ô nhập OTP
+                    document.getElementById('otp-code').focus();
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi gửi mã OTP. Vui lòng thử lại.');
+            } finally {
+                // Khôi phục nút
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+        
+        async function resendOtp() {
+            // Kiểm tra email đã được lưu chưa
+            if (!currentEmail) {
+                // Nếu chưa có, lấy từ input email (trường hợp người dùng quay lại)
+                const emailInput = document.getElementById('email');
+                currentEmail = emailInput.value.trim();
+                
+                if (!currentEmail) {
+                    alert('Vui lòng nhập địa chỉ email.');
+                    return;
+                }
+            }
+
+            // Lấy link để hiển thị loading state
+            const link = document.querySelector('#step-otp .link-secondary');
+            const originalText = link.textContent;
+            link.style.pointerEvents = 'none';
+            link.style.opacity = '0.6';
+            link.textContent = 'Đang gửi...';
+
+            try {
+                // Gọi API creat_otp
+                const response = await fetch('/creat_otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: currentEmail })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Mã đăng nhập đã được gửi lại đến email của bạn!');
+                    // Focus lại vào ô nhập OTP
+                    document.getElementById('otp-code').focus();
+                    document.getElementById('otp-code').value = '';
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi gửi lại mã OTP. Vui lòng thử lại.');
+            } finally {
+                // Khôi phục link
+                link.style.pointerEvents = 'auto';
+                link.style.opacity = '1';
+                link.textContent = originalText;
+            }
+        }
+
+        // Xử lý form đăng nhập
+        document.getElementById('step-otp').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const otpInput = document.getElementById('otp-code');
+            const otpCode = otpInput.value.trim();
+            
+            // Kiểm tra mã OTP hợp lệ
+            if (!otpCode || otpCode.length !== 6) {
+                alert('Vui lòng nhập mã OTP đầy đủ 6 chữ số.');
+                return;
+            }
+            
+            // Kiểm tra email đã được lưu chưa
+            if (!currentEmail) {
+                alert('Vui lòng nhập email trước.');
+                return;
+            }
+            
+            // Lấy nút để hiển thị loading state
+            const btn = document.querySelector('#step-otp .btn-primary');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Đang xử lý...';
+            
+            try {
+                // Gọi API check_login
+                const response = await fetch('/check_login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        email: currentEmail,
+                        otp_code: otpCode 
+                    })
+                });
+                
+                // Response luôn là JSON
+                const data = await response.json();
+                
+                if (data.success && data.session_token) {
+                    // Lưu session token vào localStorage
+                    localStorage.setItem('session_token', data.session_token);
+                    if (data.email) {
+                        localStorage.setItem('user_email', data.email);
+                    }
+                    
+                    console.log('✅ Đăng nhập thành công, redirect sang dashboard');
+                    // Redirect sang dashboard với token trong URL
+                    window.location.href = `/dashboard?token=${encodeURIComponent(data.session_token)}`;
+                } else {
+                    // Login thất bại
+                    alert('Lỗi: ' + (data.message || 'Đăng nhập thất bại'));
+                    // Xóa mã OTP để người dùng nhập lại
+                    otpInput.value = '';
+                    otpInput.focus();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại.');
+            } finally {
+                // Khôi phục nút (chỉ khi không redirect)
+                if (document.querySelector('#step-otp .btn-primary')) {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>

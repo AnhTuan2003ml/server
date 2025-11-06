@@ -1,0 +1,160 @@
+/* Khai báo biến màu sắc */
+:root {
+    --color-primary: #1a73e8; /* Màu xanh dương thương hiệu */
+    --color-secondary: #5f6368;
+    --color-background: #f8f9fa;
+    --color-text: #202124;
+    --color-border: #dadce0;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: var(--color-background);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.login-card {
+    background: #fff;
+    padding: 40px;
+    border-radius: 12px; /* Bo góc */
+    box-shadow: var(--card-shadow); /* Đổ bóng nhẹ */
+    width: 100%;
+    max-width: 400px; /* Chiều rộng tối đa */
+    text-align: center;
+}
+
+.logo {
+    color: var(--color-primary);
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.title {
+    font-size: 1.5rem;
+    color: var(--color-text);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.subtitle {
+    font-size: 1rem;
+    color: var(--color-secondary);
+    margin-bottom: 30px;
+}
+
+/* --- Input Field (Floating Label) --- */
+.input-group {
+    position: relative;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.input-group .icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-secondary);
+    font-size: 1rem;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px 15px 15px 40px; /* Chừa chỗ cho icon */
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+    box-sizing: border-box; /* Quan trọng để padding không làm tăng chiều rộng */
+}
+
+/* Hiệu ứng focus */
+.input-group input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* Label (Nhãn) */
+.input-group label {
+    position: absolute;
+    left: 40px; /* Cùng vị trí với văn bản input */
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-secondary);
+    pointer-events: none;
+    transition: all 0.3s ease;
+    background: #fff;
+    padding: 0 5px;
+}
+
+/* Hiệu ứng Floating Label */
+.input-group input:not(:placeholder-shown) + label,
+.input-group input:focus + label {
+    top: 0; /* Di chuyển lên trên */
+    font-size: 0.75rem; /* Thu nhỏ */
+    color: var(--color-primary);
+    transform: translate(0, -50%); /* Căn chỉnh vị trí */
+    left: 15px;
+}
+
+/* --- Nút và Tùy chọn --- */
+.action-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 40px;
+}
+
+.link-secondary {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.link-secondary:hover {
+    color: #1558b3;
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #1558b3;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+
+/* Lớp CSS để ẩn form */
+.hidden {
+    display: none !important;
+}
+
+.otp-instruction {
+    text-align: center;
+    color: var(--color-secondary);
+    margin-bottom: 25px;
+    font-size: 0.95rem;
+    padding: 0 10px;
+}
+
+/* Điều chỉnh lại icon cho input OTP */
+#step-otp .input-group .icon {
+    /* Đảm bảo icon key có màu và kích thước phù hợp */
+    font-size: 1rem; 
+}

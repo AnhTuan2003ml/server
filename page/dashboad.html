@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Quản Lý Hệ Thống (Editable)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* --- CSS (style.css) --- */
+        :root {
+            --color-primary: #1e88e5; /* Blue */
+            --color-secondary: #ff9800; /* Amber/Orange */
+            --color-success: #4caf50;
+            --color-danger: #f44336;
+            --color-text: #333;
+            --color-background: #f4f7f6;
+            --card-bg: #ffffff;
+            --border-radius: 8px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .main-title {
+            color: var(--color-primary);
+            margin-bottom: 30px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* --- Header Section --- */
+        .header-section {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header-section h2 {
+            color: var(--color-text);
+            font-weight: 500;
+            font-size: 1.5rem;
+        }
+
+        /* --- 1. Config Card --- */
+        .config-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .config-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+        
+        .btn-apply {
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-apply:hover {
+            background-color: #1565c0;
+        }
+        
+        .btn-apply:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-apply.loading {
+            opacity: 0.7;
+        }
+
+        .config-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        .config-item strong {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--color-secondary);
+            margin-bottom: 5px;
+        }
+
+        .config-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--color-text);
+            padding: 2px 5px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .config-value.editable {
+            cursor: pointer;
+        }
+
+        .config-value.editable:hover {
+            background-color: #f0f0f0;
+        }
+
+        .config-value input {
+            width: 100%;
+            border: 1px solid var(--color-primary);
+            padding: 5px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        /* --- 2. User Table --- */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .user-table th, .user-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .user-table th {
+            background-color: var(--color-primary);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .user-table tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        /* Cell Editable */
+        .cell-editable {
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-radius: 4px;
+        }
+
+        .cell-editable:hover {
+            background-color: #e6e6e6;
+        }
+
+        .cell-input {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid var(--color-primary);
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        /* Active Status Toggle */
+        .status-toggle {
+            display: inline-block;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+            padding: 5px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .status-toggle.active-true {
+            background-color: var(--color-success);
+            color: white;
+        }
+
+        .status-toggle.active-false {
+            background-color: var(--color-danger);
+            color: white;
+        }
+
+        /* Button Group */
+        .action-buttons button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0 5px;
+            color: var(--color-primary);
+            transition: color 0.2s;
+        }
+
+        .action-buttons button:hover {
+            color: var(--color-secondary);
+        }
+
+        /* --- Admin Header --- */
+        .admin-header {
+            background: var(--card-bg);
+            padding: 15px 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+        }
+
+        .admin-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .admin-email {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .btn-logout {
+            background-color: var(--color-danger);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-logout:hover {
+            background-color: #d32f2f;
+        }
+
+        /* --- Search Section --- */
+        .search-section {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .btn-search {
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-search:hover {
+            background-color: #1565c0;
+        }
+
+        .btn-clear {
+            background-color: #999;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-clear:hover {
+            background-color: #777;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Admin Header -->
+    <div class="admin-header">
+        <div class="admin-info">
+            <div class="admin-icon">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <div>
+                <div class="admin-name" id="admin-name">Nguyễn Thế Dương</div>
+                <div class="admin-email" id="admin-email">Loading...</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="handleLogout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Đăng Xuất</span>
+        </button>
+    </div>
+
+    <div class="dashboard-container">
+        <h1 class="main-title"><i class="fas fa-tachometer-alt"></i> Bảng Điều Khiển Hệ Thống</h1>
+
+        <!-- Config Section -->
+        <section class="config-section">
+            <div class="header-section">
+                <h2><i class="fas fa-cog"></i> Cấu Hình Chung</h2>
+            </div>
+            <div class="config-card" id="config-card">
+                </div>
+            <div class="config-actions">
+                <button class="btn-apply" id="btn-apply-config" onclick="applyConfig()">
+                    <i class="fas fa-check"></i>
+                    <span>Apply</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="header-section">
+                <h2><i class="fas fa-search"></i> Tìm Kiếm User</h2>
+            </div>
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="search-input" 
+                    placeholder="Nhập ID user để tìm kiếm..."
+                    onkeydown="handleSearchKeyDown(event)"
+                >
+                <button class="btn-search" onclick="handleSearch()">
+                    <i class="fas fa-search"></i>
+                    <span>Tìm Kiếm</span>
+                </button>
+                <button class="btn-clear" onclick="handleClearSearch()">
+                    <i class="fas fa-times"></i>
+                    <span>Xóa</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- User Section -->
+        <section class="user-section">
+            <div class="header-section">
+                <h2><i class="fas fa-users"></i> Danh Sách Người Dùng</h2>
+            </div>
+            <div class="table-responsive">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Limit</th>
+                            <th>Count</th>
+                            <th>Active</th>
+                            <th>Created At</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // --- JAVASCRIPT (script.js) ---
+
+        // Khai báo API Endpoint (Sẽ được cập nhật từ api.txt)
+        let BASE_URL = 'http://localhost:5000'; // Giá trị mặc định
+        const CONFIG_NAME = 'pay_ment'; // Tên file config (không có .json)
+        
+        // Hàm để lấy URL từ api.txt thông qua endpoint /api_url
+        async function loadApiUrl() {
+            try {
+                // Thử fetch từ endpoint /api_url (relative URL)
+                const response = await fetch('/api_url');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.url) {
+                        BASE_URL = data.url;
+                        console.log(`✅ Đã load API URL từ api.txt: ${BASE_URL}`);
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ Không thể load URL từ api.txt, sử dụng localhost:', error);
+            }
+        }
+
+        /**
+         * Kiểm tra session khi trang load
+         * Nếu không có session hợp lệ, redirect về trang login
+         */
+        async function checkSession() {
+            try {
+                // Lấy session token từ localStorage
+                const sessionToken = localStorage.getItem('session_token');
+                
+                if (!sessionToken) {
+                    console.warn('⚠️ Không tìm thấy session token, redirect về admin');
+                    window.location.href = '/admin';
+                    return false;
+                }
+                
+                // Gọi API verify_session để kiểm tra token
+                const response = await fetch(`${BASE_URL}/verify_session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ session_token: sessionToken })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.status_code === 200) {
+                    console.log(`✅ Session hợp lệ cho email: ${result.email}`);
+                    return true;
+                } else {
+                    console.warn(`⚠️ Session không hợp lệ: ${result.message}`);
+                    // Xóa session token khỏi localStorage
+                    localStorage.removeItem('session_token');
+                    localStorage.removeItem('user_email');
+                    // Redirect về admin
+                    window.location.href = '/admin';
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Lỗi khi kiểm tra session:', error);
+                // Nếu có lỗi, vẫn cho phép truy cập (fallback)
+                // Hoặc có thể redirect về login nếu muốn chặt chẽ hơn
+                return true;
+            }
+        } 
+
+        // Dữ liệu Config sẽ được lưu trữ sau khi fetch (Dữ liệu mẫu nếu API không hoạt động)
+        let configData = {
+            "BNK": "Mbbank",
+            "STK": "0966549624",
+            "UN": "HOANG NGOC HIEP",
+            "COST": "2000",
+            "LIMIT": 100
+        };
+
+        // Dữ liệu Users (sẽ được load từ API)
+        let usersData = [];
+
+        // --- 1. CONFIG CARD LOGIC (API Enabled) ---
+
+        /**
+         * Lấy dữ liệu cấu hình từ API
+         */
+        async function fetchConfig() {
+            try {
+                const response = await fetch(`${BASE_URL}/config/pay_ment`);
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        // result.data có cấu trúc: {file_name: "pay_ment", config: {...}}
+                        // Chỉ lấy phần config chứa các trường BNK, STK, UN, COST, LIMIT
+                        if (result.data.config) {
+                            configData = result.data.config;
+                            console.log(`✅ Đã tải config từ API:`, configData);
+                        } else {
+                            // Nếu không có trường config, thử dùng toàn bộ data
+                            configData = result.data;
+                            console.warn('⚠️ API trả về không có trường config, sử dụng toàn bộ data');
+                        }
+                    } else {
+                        console.warn('⚠️ API trả về nhưng không có data, sử dụng dữ liệu mẫu');
+                    }
+                } else {
+                    console.warn(`⚠️ Không thể tải config (status: ${response.status}), sử dụng dữ liệu mẫu`);
+                }
+                renderConfig(); 
+            } catch (error) {
+                console.error('❌ Lỗi khi fetch config:', error);
+                document.getElementById('config-card').innerHTML = '<p style="color:red;">Không thể tải cấu hình. (Sử dụng dữ liệu mẫu)</p>';
+                renderConfig(); 
+            }
+        }
+
+        function renderConfig() {
+            const card = document.getElementById('config-card');
+            card.innerHTML = '';
+
+            // Đảm bảo configData là object và không phải null/undefined
+            if (!configData || typeof configData !== 'object') {
+                console.error('❌ configData không hợp lệ:', configData);
+                card.innerHTML = '<p style="color:red;">Dữ liệu cấu hình không hợp lệ</p>';
+                return;
+            }
+
+            // Hiển thị các trường từ pay_ment.json: BNK, STK, UN, COST, LIMIT
+            for (const key in configData) {
+                // Bỏ qua các thuộc tính không phải của object (như prototype)
+                if (!configData.hasOwnProperty(key)) continue;
+                
+                let value = configData[key];
+                
+                // Chuyển đổi giá trị thành string để hiển thị
+                if (value === null || value === undefined) {
+                    value = '';
+                } else if (typeof value === 'object') {
+                    // Nếu là object, chuyển thành JSON string
+                    value = JSON.stringify(value);
+                } else {
+                    value = String(value);
+                }
+                
+                const item = document.createElement('div');
+                item.className = 'config-item';
+
+                const title = document.createElement('strong');
+                title.textContent = key;
+                item.appendChild(title);
+
+                const valueDisplay = document.createElement('span');
+                valueDisplay.textContent = value;
+                valueDisplay.className = 'config-value editable';
+                valueDisplay.setAttribute('data-key', key);
+                valueDisplay.addEventListener('click', handleConfigEdit);
+                item.appendChild(valueDisplay);
+
+                card.appendChild(item);
+            }
+        }
+
+        function handleConfigEdit(event) {
+            const valueElement = event.target;
+            const key = valueElement.getAttribute('data-key');
+            const currentValue = valueElement.textContent;
+
+            const input = document.createElement('input');
+            input.value = currentValue;
+            input.type = (key === 'LIMIT' || key === 'COST') ? 'number' : 'text'; 
+            input.className = 'config-input';
+            input.onblur = () => saveConfigEdit(input, key); 
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    input.blur();
+                }
+            };
+
+            valueElement.replaceWith(input);
+            input.focus();
+        }
+
+        /**
+         * Cập nhật một trường cấu hình (chỉ cập nhật local, chưa lưu vào file)
+         */
+        function saveConfigEdit(inputElement, key) {
+            const newValue = inputElement.value.trim();
+            
+            // Chuyển đổi kiểu dữ liệu nếu cần
+            let processedValue = newValue;
+            if (key === 'LIMIT' || key === 'COST') {
+                processedValue = key === 'LIMIT' ? parseInt(newValue) || 0 : newValue;
+            }
+
+            // 1. Cập nhật giao diện
+            const valueDisplay = document.createElement('span');
+            valueDisplay.textContent = processedValue;
+            valueDisplay.className = 'config-value editable';
+            valueDisplay.setAttribute('data-key', key);
+            valueDisplay.addEventListener('click', handleConfigEdit);
+            inputElement.replaceWith(valueDisplay);
+
+            // 2. Cập nhật dữ liệu cục bộ (chưa lưu vào file)
+            configData[key] = processedValue;
+            console.log(`📝 Đã cập nhật local: ${key} = ${processedValue} (Chưa apply)`);
+        }
+        
+        /**
+         * Apply tất cả các thay đổi cấu hình vào file pay_ment.json
+         */
+        async function applyConfig() {
+            const btnApply = document.getElementById('btn-apply-config');
+            const btnText = btnApply.querySelector('span');
+            const btnIcon = btnApply.querySelector('i');
+            
+            // Disable button và hiển thị loading
+            btnApply.disabled = true;
+            btnApply.classList.add('loading');
+            btnIcon.className = 'fas fa-spinner fa-spin';
+            btnText.textContent = 'Đang lưu...';
+            
+            try {
+                // Chuẩn bị dữ liệu để gửi
+                const configToSave = {
+                    BNK: configData.BNK || '',
+                    STK: configData.STK || '',
+                    UN: configData.UN || '',
+                    COST: String(configData.COST || '0'),
+                    LIMIT: parseInt(configData.LIMIT) || 0
+                };
+                
+                console.log(`💾 Đang lưu config vào file pay_ment.json:`, configToSave);
+                
+                // Gửi yêu cầu PUT để cập nhật toàn bộ config
+                const response = await fetch(`${BASE_URL}/config/pay_ment`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ config: configToSave })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('✅ Đã lưu cấu hình thành công vào file pay_ment.json!');
+                        console.log('✅ Config đã được lưu:', result.data);
+                        // Có thể reload lại config từ server để đảm bảo đồng bộ
+                        await fetchConfig();
+                    } else {
+                        throw new Error(result.message || 'Lỗi không xác định');
+                    }
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error("❌ Lỗi khi lưu config:", error);
+                alert(`❌ LỖI: Không thể lưu cấu hình. ${error.message}`);
+            } finally {
+                // Restore button
+                btnApply.disabled = false;
+                btnApply.classList.remove('loading');
+                btnIcon.className = 'fas fa-check';
+                btnText.textContent = 'Apply';
+            }
+        }
+
+        // --- 2. USER TABLE LOGIC (API Enabled) ---
+
+        /**
+         * Lấy dữ liệu users từ API
+         */
+        async function fetchUsers() {
+            try {
+                console.log('📥 Đang lấy danh sách users từ API...');
+                const response = await fetch(`${BASE_URL}/users`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    usersData = result.data;
+                    console.log(`✅ Đã lấy ${usersData.length} users từ API`);
+                    renderUsers(); // Render lại bảng sau khi fetch
+                } else {
+                    throw new Error(result.message || 'Không thể lấy dữ liệu users');
+                }
+            } catch (error) {
+                console.error("❌ Lỗi khi lấy danh sách users:", error);
+                // Giữ dữ liệu rỗng nếu không lấy được từ API
+                usersData = [];
+                renderUsers(); // Render bảng rỗng
+            }
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('user-table-body');
+            tbody.innerHTML = '';
+
+            usersData.forEach((user, index) => {
+                const row = tbody.insertRow();
+                row.setAttribute('data-id', user.id);
+
+                row.insertCell().textContent = user.id.substring(0, 10) + '...';
+
+                // Limit (Có thể chỉnh sửa)
+                const limitCell = row.insertCell();
+                limitCell.className = 'cell-editable';
+                limitCell.setAttribute('data-field', 'limit');
+                limitCell.textContent = user.limit;
+                limitCell.addEventListener('click', (e) => handleUserEdit(e, index, 'limit', 'number'));
+
+                // Count
+                row.insertCell().textContent = user.count;
+
+                // Active (Toggle)
+                const activeCell = row.insertCell();
+                const toggle = document.createElement('span');
+                toggle.className = `status-toggle active-${user.active}`;
+                toggle.textContent = user.active ? 'Active' : 'Inactive';
+                toggle.addEventListener('click', () => toggleUserActive(index));
+                activeCell.appendChild(toggle);
+
+                // Created At (nếu không có thì hiển thị "N/A")
+                const createdAtCell = row.insertCell();
+                if (user.created_at) {
+                    createdAtCell.textContent = new Date(user.created_at).toLocaleDateString('vi-VN');
+                } else {
+                    createdAtCell.textContent = 'N/A';
+                    createdAtCell.style.color = '#999';
+                }
+
+                // Hành Động
+                const actionsCell = row.insertCell();
+                actionsCell.className = 'action-buttons';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.title = 'Xóa User';
+                deleteBtn.onclick = () => deleteUser(index);
+                actionsCell.appendChild(deleteBtn);
+            });
+        }
+
+        function handleUserEdit(event, index, field, type) {
+            const cell = event.target;
+            const currentValue = usersData[index][field];
+
+            const input = document.createElement('input');
+            input.value = currentValue;
+            input.type = type;
+            input.className = 'cell-input';
+            
+            input.onblur = () => saveUserEdit(input, index, field, cell);
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    input.blur();
+                }
+            };
+
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            input.focus();
+        }
+
+        async function saveUserEdit(inputElement, index, field, cellElement) {
+            const newValue = inputElement.value.trim();
+            let parsedValue = newValue;
+            const oldValue = usersData[index][field]; // Lưu giá trị cũ
+
+            if (field === 'limit') {
+                parsedValue = parseInt(newValue) || oldValue;
+            }
+            
+            // Cập nhật local data
+            usersData[index][field] = parsedValue;
+            cellElement.textContent = parsedValue;
+
+            // Gọi API để cập nhật trên server
+            try {
+                const response = await fetch(`${BASE_URL}/users/${usersData[index].id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        [field]: parsedValue
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log(`✅ Đã cập nhật user ${usersData[index].id.substring(0, 10)}...: ${field} = ${parsedValue}`);
+                } else {
+                    // Nếu lỗi, revert lại giá trị cũ
+                    usersData[index][field] = oldValue;
+                    cellElement.textContent = oldValue;
+                    alert(`❌ Lỗi khi cập nhật: ${result.message}`);
+                }
+            } catch (error) {
+                console.error("❌ Lỗi khi cập nhật user:", error);
+                // Nếu lỗi, revert lại giá trị cũ
+                usersData[index][field] = oldValue;
+                cellElement.textContent = oldValue;
+                alert(`❌ Lỗi khi cập nhật: ${error.message}`);
+            }
+        }
+
+        async function toggleUserActive(index) {
+            const oldValue = usersData[index].active;
+            const newValue = !oldValue;
+            
+            // Cập nhật local data
+            usersData[index].active = newValue;
+            renderUsers();
+
+            // Gọi API để cập nhật trên server
+            try {
+                const response = await fetch(`${BASE_URL}/users/${usersData[index].id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        active: newValue
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log(`✅ Đã cập nhật trạng thái user ${usersData[index].id.substring(0, 10)}...: ${newValue ? 'Đã kích hoạt' : 'Đã vô hiệu hóa'}`);
+                } else {
+                    // Nếu lỗi, revert lại giá trị cũ
+                    usersData[index].active = oldValue;
+                    renderUsers();
+                    alert(`❌ Lỗi khi cập nhật: ${result.message}`);
+                }
+            } catch (error) {
+                console.error("❌ Lỗi khi cập nhật trạng thái user:", error);
+                // Nếu lỗi, revert lại giá trị cũ
+                usersData[index].active = oldValue;
+                renderUsers();
+                alert(`❌ Lỗi khi cập nhật: ${error.message}`);
+            }
+        }
+
+        async function deleteUser(index) {
+            const userId = usersData[index].id;
+            const userIdShort = userId.substring(0, 10) + '...';
+            
+            if (!confirm(`Bạn có chắc chắn muốn xóa user ${userIdShort}?`)) {
+                return;
+            }
+
+            // Gọi API để xóa trên server
+            try {
+                const response = await fetch(`${BASE_URL}/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Xóa khỏi local data và render lại
+                    usersData.splice(index, 1);
+                    renderUsers();
+                    console.log(`✅ Đã xóa user ${userIdShort} thành công`);
+                } else {
+                    alert(`❌ Lỗi khi xóa user: ${result.message}`);
+                }
+            } catch (error) {
+                console.error("❌ Lỗi khi xóa user:", error);
+                alert(`❌ Lỗi khi xóa user: ${error.message}`);
+            }
+        }
+
+        // --- SEARCH FUNCTIONALITY ---
+        async function handleSearch() {
+            const searchInput = document.getElementById('search-input');
+            const searchId = searchInput.value.trim();
+            
+            if (!searchId) {
+                alert('⚠️ Vui lòng nhập ID user để tìm kiếm');
+                return;
+            }
+            
+            try {
+                console.log(`🔍 Đang tìm kiếm user với ID: ${searchId}`);
+                const response = await fetch(`${BASE_URL}/users/search?id=${encodeURIComponent(searchId)}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success && result.data && result.data.length > 0) {
+                    // Cập nhật usersData với kết quả tìm kiếm
+                    usersData = result.data;
+                    renderUsers();
+                    console.log(`✅ Tìm thấy ${result.count} user(s)`);
+                } else {
+                    alert(`❌ ${result.message || 'Không tìm thấy user nào'}`);
+                    // Giữ nguyên danh sách hiện tại hoặc load lại tất cả
+                    await fetchUsers();
+                }
+            } catch (error) {
+                console.error("❌ Lỗi khi tìm kiếm user:", error);
+                alert(`❌ Lỗi khi tìm kiếm: ${error.message}`);
+            }
+        }
+
+        function handleSearchKeyDown(event) {
+            if (event.key === 'Enter') {
+                handleSearch();
+            }
+        }
+
+        async function handleClearSearch() {
+            document.getElementById('search-input').value = '';
+            // Load lại tất cả users
+            await fetchUsers();
+        }
+
+        // --- LOGOUT FUNCTIONALITY ---
+        async function handleLogout() {
+            if (!confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                return;
+            }
+            
+            try {
+                const sessionToken = localStorage.getItem('session_token');
+                
+                if (!sessionToken) {
+                    // Nếu không có token, vẫn redirect về admin
+                    localStorage.removeItem('session_token');
+                    localStorage.removeItem('user_email');
+                    window.location.href = '/admin';
+                    return;
+                }
+                
+                // Gọi API logout
+                const response = await fetch(`${BASE_URL}/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ session_token: sessionToken })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('✅ Đã đăng xuất thành công');
+                } else {
+                    console.warn('⚠️ Lỗi khi đăng xuất:', result.message);
+                }
+                
+                // Xóa session token và email khỏi localStorage
+                localStorage.removeItem('session_token');
+                localStorage.removeItem('user_email');
+                
+                // Redirect về trang admin (login)
+                window.location.href = '/admin';
+                
+            } catch (error) {
+                console.error('❌ Lỗi khi đăng xuất:', error);
+                // Vẫn xóa localStorage và redirect
+                localStorage.removeItem('session_token');
+                localStorage.removeItem('user_email');
+                window.location.href = '/admin';
+            }
+        }
+
+        // --- UPDATE ADMIN INFO ---
+        async function updateAdminInfo() {
+            try {
+                const sessionToken = localStorage.getItem('session_token');
+                const userEmail = localStorage.getItem('user_email');
+                
+                // Hiển thị email nếu có
+                if (userEmail) {
+                    document.getElementById('admin-email').textContent = userEmail;
+                } else {
+                    // Nếu không có email trong localStorage, lấy từ verify_session
+                    if (sessionToken) {
+                        const response = await fetch(`${BASE_URL}/verify_session`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ session_token: sessionToken })
+                        });
+                        
+                        const result = await response.json();
+                        if (result.success && result.email) {
+                            document.getElementById('admin-email').textContent = result.email;
+                            localStorage.setItem('user_email', result.email);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Lỗi khi cập nhật thông tin admin:', error);
+            }
+        }
+
+        // Khởi tạo Dashboard
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load URL từ api.txt trước để có BASE_URL đúng
+            await loadApiUrl();
+            
+            // Kiểm tra session sau khi đã có BASE_URL
+            const isSessionValid = await checkSession();
+            if (!isSessionValid) {
+                // Nếu session không hợp lệ, checkSession() đã redirect về login
+                return;
+            }
+            
+            // Cập nhật thông tin admin
+            await updateAdminInfo();
+            
+            // Sau đó mới fetch config và users từ API
+            fetchConfig(); // Bắt đầu bằng việc lấy dữ liệu config
+            fetchUsers(); // Lấy dữ liệu users từ API và render bảng
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+region: us
+version: '2'
+authtoken: 2HoQKnMiYwZhK2fRJaerT3sw2K7_nmAPPBKp5gss32Ebj2j5
+web_addr: 127.0.0.1:4040
+
+tunnels:
+  api-http:
+    proto: http
+    addr: 5000
+    domain: afa699851df5.ngrok-free.app
+  
+  device-ssh:
+    proto: tcp
+    addr: 3389
+    remote_addr: 1.tcp.ngrok.io:12345
