@@ -1455,48 +1455,109 @@ def api_url_endpoint():
         return response, 500
 
 
-@app.route('/users', methods=['GET'])
+@app.route('/users', methods=['GET', 'POST'])
 def users_endpoint():
     """
-    API endpoint để lấy danh sách users từ db/data.json
+    API endpoint để lấy danh sách users hoặc tạo user mới
+    
+    GET: Lấy danh sách users từ db/data.json
+    POST: Tạo user mới
+    
+    Body JSON (POST):
+    {
+        "limit": 100,
+        "active": true
+    }
     
     Returns:
+        GET:
         - 200: Thành công - Danh sách users (JSON)
+        - 500: Lỗi server (JSON)
+        
+        POST:
+        - 201: Thành công - User đã được tạo (JSON)
+        - 400: Request không hợp lệ (JSON)
         - 500: Lỗi server (JSON)
     
     Example:
         GET /users
+        POST /users
+        Body: {"limit": 100, "active": true}
     """
     try:
-        success, data, status_code, message = user_api.handle_get_users()
+        if request.method == 'GET':
+            success, data, status_code, message = user_api.handle_get_users()
+            
+            response_data = {
+                "success": success,
+                "status_code": status_code,
+                "message": message
+            }
+            if data:
+                response_data["data"] = data.get("users", [])
+                response_data["count"] = data.get("count", 0)
+            
+            response = jsonify(response_data)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT, OPTIONS')
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+            return response, status_code
         
-        response_data = {
-            "success": success,
-            "status_code": status_code,
-            "message": message
-        }
-        if data:
-            response_data["data"] = data.get("users", [])
-            response_data["count"] = data.get("count", 0)
-        
-        response = jsonify(response_data)
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Methods', 'GET, DELETE, PUT, OPTIONS')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        return response, status_code
+        elif request.method == 'POST':
+            # Lấy dữ liệu từ request body
+            if not request.is_json:
+                response = jsonify({
+                    "success": False,
+                    "status_code": 400,
+                    "message": "Request body phải là JSON"
+                })
+                response.headers.add('Access-Control-Allow-Origin', '*')
+                response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT, OPTIONS')
+                response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+                return response, 400
+            
+            json_data = request.get_json()
+            limit = json_data.get('limit')
+            active = json_data.get('active', True)  # Mặc định là True
+            
+            success, data, status_code, message = user_api.handle_create_user(limit, active)
+            
+            response_data = {
+                "success": success,
+                "status_code": status_code,
+                "message": message
+            }
+            if data:
+                response_data["data"] = data
+            
+            response = jsonify(response_data)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT, OPTIONS')
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+            return response, status_code
         
     except Exception as e:
-        print(f"❌ Lỗi khi lấy danh sách users: {e}")
+        print(f"❌ Lỗi khi xử lý users: {e}")
         response = jsonify({
             "success": False,
             "status_code": 500,
             "message": f"Lỗi server: {str(e)}",
-            "data": []
+            "data": [] if request.method == 'GET' else None
         })
         response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Methods', 'GET, DELETE, PUT, OPTIONS')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT, OPTIONS')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
         return response, 500
+
+
+@app.route('/users', methods=['OPTIONS'])
+def users_options_endpoint():
+    """Handle CORS preflight requests for /users"""
+    response = jsonify({})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT, OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+    return response, 200
 
 
 @app.route('/users/search', methods=['GET'])
@@ -1616,7 +1677,7 @@ def user_manage_endpoint(user_id):
             
             response = jsonify(response_data)
             response.headers.add('Access-Control-Allow-Origin', '*')
-            response.headers.add('Access-Control-Allow-Methods', 'GET, DELETE, PUT, OPTIONS')
+            response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT, OPTIONS')
             response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
             return response, status_code
         
@@ -1629,7 +1690,7 @@ def user_manage_endpoint(user_id):
                     "message": "Request body phải là JSON"
                 })
                 response.headers.add('Access-Control-Allow-Origin', '*')
-                response.headers.add('Access-Control-Allow-Methods', 'GET, DELETE, PUT, OPTIONS')
+                response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT, OPTIONS')
                 response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
                 return response, 400
             
@@ -1647,7 +1708,7 @@ def user_manage_endpoint(user_id):
             
             response = jsonify(response_data)
             response.headers.add('Access-Control-Allow-Origin', '*')
-            response.headers.add('Access-Control-Allow-Methods', 'GET, DELETE, PUT, OPTIONS')
+            response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT, OPTIONS')
             response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
             return response, status_code
         
@@ -1659,7 +1720,7 @@ def user_manage_endpoint(user_id):
             "message": f"Lỗi server: {str(e)}"
         })
         response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Methods', 'GET, DELETE, PUT, OPTIONS')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, DELETE, PUT, OPTIONS')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
         return response, 500
 

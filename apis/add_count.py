@@ -117,6 +117,23 @@ def add_count(id):
         with open(db_path, 'w', encoding='utf-8') as f:
             json.dump(data_list, f, ensure_ascii=False, indent=2)
         
+        # Reset count tạm trong file temp_count.json - xóa id khỏi file
+        temp_count_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'db', 'temp_count.json')
+        if os.path.exists(temp_count_path):
+            try:
+                with open(temp_count_path, 'r', encoding='utf-8') as f:
+                    temp_count_data = json.load(f)
+                    if isinstance(temp_count_data, dict) and id in temp_count_data:
+                        # Xóa id khỏi file temp_count.json
+                        del temp_count_data[id]
+                        
+                        # Lưu lại file (nếu file rỗng thì vẫn lưu dict rỗng)
+                        with open(temp_count_path, 'w', encoding='utf-8') as f:
+                            json.dump(temp_count_data, f, ensure_ascii=False, indent=2)
+            except (json.JSONDecodeError, Exception):
+                # Nếu có lỗi khi đọc/ghi file temp_count, không ảnh hưởng đến kết quả chính
+                pass
+        
         # Trả về kết quả thành công
         return True, f"Đã tăng count thành công. Count hiện tại: {found_item['count']}", {
             "id": id,

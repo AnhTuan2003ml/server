@@ -13,7 +13,8 @@ if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
 from utils.db_lock import with_db_lock
-from apis.qr_code import doc_data_json, luu_data_json
+from apis.qr_code import doc_data_json, luu_data_json, tao_id
+import datetime
 
 
 def get_users():
@@ -75,6 +76,61 @@ def delete_user(user_id):
             
     except Exception as e:
         return False, f"Lỗi khi xóa user: {str(e)}", None
+
+
+@with_db_lock
+def create_user(limit, active=True):
+    """
+    Tạo user mới với ID ngẫu nhiên
+    
+    Args:
+        limit: Limit của user
+        active: Trạng thái active (mặc định True)
+    
+    Returns:
+        tuple: (success: bool, message: str, data: dict)
+    """
+    db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'db', 'data.json')
+    
+    try:
+        # Đọc file data.json
+        if not os.path.exists(db_path):
+            # Nếu file không tồn tại, tạo file mới với danh sách rỗng
+            users = []
+        else:
+            users = doc_data_json(db_path)
+        
+        # Kiểm tra users có phải là list không
+        if not isinstance(users, list):
+            return False, "Dữ liệu trong db/data.json không hợp lệ", None
+        
+        # Tạo ID ngẫu nhiên
+        new_id = tao_id()
+        
+        # Kiểm tra ID có trùng không (rất hiếm nhưng vẫn kiểm tra)
+        while any(user.get('id') == new_id for user in users if isinstance(user, dict)):
+            new_id = tao_id()
+        
+        # Tạo user mới
+        new_user = {
+            "id": new_id,
+            "limit": int(limit),
+            "count": 0,
+            "active": bool(active),
+            "created_at": datetime.datetime.utcnow().isoformat() + "Z"
+        }
+        
+        # Thêm user vào danh sách
+        users.append(new_user)
+        
+        # Lưu lại file
+        if luu_data_json(users, db_path):
+            return True, f"Đã tạo user thành công", new_user
+        else:
+            return False, "Lỗi khi lưu file", None
+            
+    except Exception as e:
+        return False, f"Lỗi khi tạo user: {str(e)}", None
 
 
 @with_db_lock
@@ -171,6 +227,39 @@ def handle_delete_user(user_id):
     else:
         status_code = 404 if "Không tìm thấy" in message else 500
         return False, None, status_code, message
+
+
+def handle_create_user(limit, active=True):
+    """
+    Xử lý request tạo user mới
+    
+    Args:
+        limit: Limit của user
+        active: Trạng thái active (mặc định True)
+    
+    Returns:
+        tuple: (success: bool, data: dict, status_code: int, message: str)
+    """
+    if not limit or (isinstance(limit, (int, float)) and limit < 1):
+        return False, None, 400, "limit phải là số nguyên dương"
+    
+    try:
+        limit = int(limit)
+    except (ValueError, TypeError):
+        return False, None, 400, "limit phải là số nguyên"
+    
+    success, message, data = create_user(limit, active)
+    
+    if success:
+        return True, {
+            "id": data.get("id"),
+            "limit": data.get("limit"),
+            "count": data.get("count"),
+            "active": data.get("active"),
+            "created_at": data.get("created_at")
+        }, 201, message
+    else:
+        return False, None, 500, message
 
 
 def handle_update_user(user_id, fields_dict):

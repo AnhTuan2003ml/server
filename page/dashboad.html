@@ -351,6 +351,146 @@
         .btn-clear:hover {
             background-color: #777;
         }
+
+        /* Add User Button */
+        .btn-add-user {
+            background-color: var(--color-success);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-add-user:hover {
+            background-color: #45a049;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--color-primary);
+        }
+
+        .close-modal {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .close-modal:hover {
+            color: var(--color-danger);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--color-text);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn-cancel {
+            background-color: #999;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background-color: #777;
+        }
+
+        .btn-submit {
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-submit:hover {
+            background-color: #1565c0;
+        }
+
+        .btn-submit:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -416,8 +556,12 @@
 
         <!-- User Section -->
         <section class="user-section">
-            <div class="header-section">
+            <div class="header-section" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2><i class="fas fa-users"></i> Danh Sách Người Dùng</h2>
+                <button class="btn-add-user" onclick="showAddUserModal()">
+                    <i class="fas fa-plus"></i>
+                    <span>Thêm Tài Khoản</span>
+                </button>
             </div>
             <div class="table-responsive">
                 <table class="user-table">
@@ -437,6 +581,49 @@
             </div>
         </section>
 
+    </div>
+
+    <!-- Modal Thêm Tài Khoản -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Thêm Tài Khoản Mới</h3>
+                <button class="close-modal" onclick="closeAddUserModal()">&times;</button>
+            </div>
+            <form id="addUserForm" onsubmit="handleAddUser(event)">
+                <div class="form-group">
+                    <label for="new-user-limit">Limit *</label>
+                    <input 
+                        type="number" 
+                        id="new-user-limit" 
+                        name="limit" 
+                        min="1" 
+                        value="100" 
+                        required
+                        placeholder="Nhập limit cho user"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="new-user-active">
+                        <input 
+                            type="checkbox" 
+                            id="new-user-active" 
+                            name="active" 
+                            checked
+                            style="width: auto; margin-right: 8px;"
+                        >
+                        Active (Kích hoạt tài khoản)
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeAddUserModal()">Hủy</button>
+                    <button type="submit" class="btn-submit" id="btn-submit-user">
+                        <i class="fas fa-check"></i>
+                        <span>Tạo Tài Khoản</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -747,7 +934,13 @@
                 const row = tbody.insertRow();
                 row.setAttribute('data-id', user.id);
 
-                row.insertCell().textContent = user.id.substring(0, 10) + '...';
+                // ID - Hiển thị đầy đủ với tooltip
+                const idCell = row.insertCell();
+                idCell.textContent = user.id;
+                idCell.style.fontFamily = 'monospace';
+                idCell.style.fontSize = '0.9rem';
+                idCell.style.wordBreak = 'break-all';
+                idCell.title = `ID: ${user.id}`;
 
                 // Limit (Có thể chỉnh sửa)
                 const limitCell = row.insertCell();
@@ -1052,6 +1245,88 @@
                 }
             } catch (error) {
                 console.error('❌ Lỗi khi cập nhật thông tin admin:', error);
+            }
+        }
+
+        // --- ADD USER FUNCTIONALITY ---
+        function showAddUserModal() {
+            const modal = document.getElementById('addUserModal');
+            modal.style.display = 'block';
+            // Reset form
+            document.getElementById('addUserForm').reset();
+            document.getElementById('new-user-limit').value = '100';
+            document.getElementById('new-user-active').checked = true;
+        }
+
+        function closeAddUserModal() {
+            const modal = document.getElementById('addUserModal');
+            modal.style.display = 'none';
+        }
+
+        // Đóng modal khi click bên ngoài
+        window.onclick = function(event) {
+            const modal = document.getElementById('addUserModal');
+            if (event.target === modal) {
+                closeAddUserModal();
+            }
+        }
+
+        async function handleAddUser(event) {
+            event.preventDefault();
+            
+            const btnSubmit = document.getElementById('btn-submit-user');
+            const btnText = btnSubmit.querySelector('span');
+            const btnIcon = btnSubmit.querySelector('i');
+            
+            // Disable button và hiển thị loading
+            btnSubmit.disabled = true;
+            btnIcon.className = 'fas fa-spinner fa-spin';
+            btnText.textContent = 'Đang tạo...';
+            
+            try {
+                const limit = parseInt(document.getElementById('new-user-limit').value);
+                const active = document.getElementById('new-user-active').checked;
+                
+                if (!limit || limit < 1) {
+                    throw new Error('Limit phải là số nguyên dương');
+                }
+                
+                console.log(`📝 Đang tạo user mới với limit=${limit}, active=${active}`);
+                
+                // Gọi API để tạo user mới
+                const response = await fetch(`${BASE_URL}/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        limit: limit,
+                        active: active
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`✅ Đã tạo tài khoản thành công!\nID: ${result.data.id}`);
+                    console.log('✅ Đã tạo user mới:', result.data);
+                    
+                    // Đóng modal
+                    closeAddUserModal();
+                    
+                    // Reload danh sách users
+                    await fetchUsers();
+                } else {
+                    throw new Error(result.message || 'Không thể tạo user');
+                }
+            } catch (error) {
+                console.error("❌ Lỗi khi tạo user:", error);
+                alert(`❌ Lỗi khi tạo tài khoản: ${error.message}`);
+            } finally {
+                // Restore button
+                btnSubmit.disabled = false;
+                btnIcon.className = 'fas fa-check';
+                btnText.textContent = 'Tạo Tài Khoản';
             }
         }
 
