@@ -337,9 +337,11 @@ print(response.json())
 
 ---
 
-### 3. POST `/add_count` - Tăng Count Cho Tài Khoản
+### 3. POST `/add_count` - Chuẩn Bị Tăng Count Cho Tài Khoản
 
-API endpoint để tăng count cho tài khoản theo id. Thường được sử dụng để ghi nhận số lần sử dụng dịch vụ.
+API endpoint để chuẩn bị tăng count cho tài khoản theo id với cơ chế verify. Request sẽ được lưu vào hàng đợi tạm thời và chỉ được thực hiện khi verify thành công.
+
+**Giới hạn sử dụng:** Tổng số count hiện tại + số request pending không được vượt quá limit của tài khoản. Nếu vượt quá, sẽ không tạo được request mới.
 
 #### Request
 ```
@@ -398,16 +400,18 @@ print(response.json())
 
 #### Response
 
-**Thành công (200):**
+**Thành công - Tạo request pending (200):**
 ```json
 {
   "success": true,
-  "message": "Đã tăng count thành công. Count hiện tại: 1",
+  "message": "Đã tạo request tăng count. Vui lòng verify với request_id: 123e4567-e89b-12d3-a456-426614174000",
   "data": {
+    "request_id": "123e4567-e89b-12d3-a456-426614174000",
     "id": "id0c0nUPf3rjZwzpA3yD",
-    "count": 1,
+    "count": 0,
     "limit": 1,
-    "active": true
+    "active": true,
+    "status": "pending"
   }
 }
 ```
@@ -455,6 +459,22 @@ print(response.json())
 }
 ```
 
+**Lỗi - Đã đạt giới hạn sử dụng (400):**
+```json
+{
+  "success": false,
+  "message": "Tài khoản đã đạt giới hạn sử dụng. Count hiện tại: 8, Pending requests: 2, Limit: 10",
+  "data": {
+    "error_code": "ACCOUNT_LIMIT_REACHED",
+    "id": "id0c0nUPf3rjZwzpA3yD",
+    "count": 8,
+    "pending_count": 2,
+    "limit": 10,
+    "total_used": 10
+  }
+}
+```
+
 **Lỗi - Không tìm thấy tài khoản (500):**
 ```json
 {
@@ -474,7 +494,121 @@ print(response.json())
 
 ---
 
-### 4. POST `/check` - Kiểm Tra Trạng Thái Tài Khoản
+### 4. POST `/verify_count` - Verify Request Tăng Count
+
+API endpoint để xác nhận hoặc hủy request tăng count đã được tạo trước đó. Chỉ khi verify với `approved: true` thì count mới được tăng thực sự.
+
+#### Request
+```
+POST /verify_count
+Content-Type: application/json
+```
+
+**Body JSON:**
+```json
+{
+  "request_id": "123e4567-e89b-12d3-a456-426614174000",
+  "approved": true
+}
+```
+
+**Trường bắt buộc:**
+- `request_id`: ID của request cần verify (phải là chuỗi UUID)
+- `approved`: Quyết định xử lý (phải là boolean)
+  - `true`: Thực hiện tăng count
+  - `false`: Hủy request
+
+#### Ví dụ Request
+
+**cURL:**
+```bash
+curl -X POST http://localhost:5000/verify_count \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_id": "123e4567-e89b-12d3-a456-426614174000",
+    "approved": true
+  }'
+```
+
+**JavaScript/Fetch:**
+```javascript
+fetch('http://localhost:5000/verify_count', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    request_id: "123e4567-e89b-12d3-a456-426614174000",
+    approved: true
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
+
+**Python requests:**
+```python
+import requests
+
+url = "http://localhost:5000/verify_count"
+data = {
+    "request_id": "123e4567-e89b-12d3-a456-426614174000",
+    "approved": true
+}
+
+response = requests.post(url, json=data)
+print(response.json())
+```
+
+#### Response
+
+**Thành công - Approve (200):**
+```json
+{
+  "success": true,
+  "message": "Đã tăng count thành công. Count hiện tại: 1",
+  "data": {
+    "request_id": "123e4567-e89b-12d3-a456-426614174000",
+    "id": "id0c0nUPf3rjZwzpA3yD",
+    "count": 1,
+    "limit": 10,
+    "active": true,
+    "status": "completed"
+  }
+}
+```
+
+**Thành công - Reject (200):**
+```json
+{
+  "success": true,
+  "message": "Đã hủy request 123e4567-e89b-12d3-a456-426614174000",
+  "data": {
+    "request_id": "123e4567-e89b-12d3-a456-426614174000",
+    "status": "cancelled"
+  }
+}
+```
+
+**Lỗi - Request không tồn tại (400):**
+```json
+{
+  "success": false,
+  "message": "Không tìm thấy request với ID: 123e4567-e89b-12d3-a456-426614174000"
+}
+```
+
+**Lỗi - Request đã xử lý (400):**
+```json
+{
+  "success": false,
+  "message": "Request đã được xử lý với trạng thái: completed"
+}
+```
+
+---
+
+### 5. POST `/check` - Kiểm Tra Trạng Thái Tài Khoản
 
 API endpoint để kiểm tra trạng thái tài khoản theo id. Kiểm tra xem tài khoản có tồn tại và đang hoạt động hay không.
 
@@ -819,11 +953,22 @@ curl -X POST http://localhost:5000/check \
   -d '{"id": "id0c0nUPf3rjZwzpA3yD"}'
 ```
 
-4. **Tăng count sau khi thanh toán thành công:**
+4. **Chuẩn bị tăng count (tạo pending request):**
 ```bash
 curl -X POST http://localhost:5000/add_count \
   -H "Content-Type: application/json" \
   -d '{"id": "id0c0nUPf3rjZwzpA3yD"}'
+```
+
+5. **Verify và thực hiện tăng count:**
+```bash
+# Lấy request_id từ response của bước 4
+curl -X POST http://localhost:5000/verify_count \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request_id": "123e4567-e89b-12d3-a456-426614174000",
+    "approved": true
+  }'
 ```
 
 **JavaScript example - Luồng hoàn chỉnh:**
@@ -852,9 +997,41 @@ fetch('http://localhost:5000/qr?sl=50&format=json')
         if (result.success && result.data.active) {
           console.log('✅ Tài khoản đã được kích hoạt!');
           clearInterval(checkInterval);
-          
-          // 3. Tăng count (nếu cần)
-          // ... sử dụng /add_count endpoint
+
+          // 3. Chuẩn bị tăng count (tạo pending request)
+          fetch('http://localhost:5000/add_count', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: qrId })
+          })
+          .then(response => response.json())
+          .then(addResult => {
+            if (addResult.success) {
+              const requestId = addResult.data.request_id;
+              console.log('📋 Đã tạo request tăng count:', requestId);
+
+              // 4. Verify và thực hiện tăng count
+              fetch('http://localhost:5000/verify_count', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  request_id: requestId,
+                  approved: true
+                })
+              })
+              .then(response => response.json())
+              .then(verifyResult => {
+                if (verifyResult.success) {
+                  console.log('✅ Đã tăng count thành công!');
+                  console.log('📊 Count hiện tại:', verifyResult.data.count);
+                } else {
+                  console.error('❌ Lỗi khi verify:', verifyResult.message);
+                }
+              });
+            } else {
+              console.error('❌ Lỗi khi tạo request add_count:', addResult.message);
+            }
+          });
         } else {
           console.log('⏳ Đang chờ thanh toán...');
         }

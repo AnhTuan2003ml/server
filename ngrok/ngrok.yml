@@ -8,6 +8,11 @@ tunnels:
     proto: http
     addr: 5000
     domain: afa699851df5.ngrok-free.app
+
+  api-http-2:
+    proto: http
+    addr: 5001
+    domain: 47e52c86490d.ngrok-free.app
   
   device-ssh:
     proto: tcp

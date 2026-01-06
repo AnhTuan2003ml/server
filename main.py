@@ -151,7 +151,8 @@ def in_thong_tin_api(port, local_ip):
     print(f"       Header: X-QR-ID chứa id khi trả về image")
     print(f"   • GET  http://localhost:{port}/admin           - Giao diện đăng nhập admin")
     print(f"   • POST http://localhost:{port}/authentication  - API authentication (hiển thị thông tin nhận được)")
-    print(f"   • POST http://localhost:{port}/add_count       - Tăng count cho tài khoản theo id")
+    print(f"   • POST http://localhost:{port}/add_count       - Chuẩn bị tăng count cho tài khoản theo id (tạo pending request)")
+    print(f"   • POST http://localhost:{port}/verify_count    - Verify và thực hiện tăng count hoặc hủy request")
     print(f"   • POST http://localhost:{port}/creat_otp      - Tạo và gửi mã OTP qua email")
     print(f"   • POST http://localhost:{port}/check_login    - Kiểm tra mã OTP để đăng nhập (trả về session token)")
     print(f"   • GET  http://localhost:{port}/dashboard      - Trang dashboard quản lý hệ thống")
@@ -476,9 +477,9 @@ def add_count_endpoint():
     print(f"\n📤 Trích xuất thông tin:")
     print(f"   • id: {id}")
     
-    # Gọi hàm xử lý từ module add_count
-    print(f"\n🔄 Đang xử lý tăng count...")
-    success, message, data = add_count.add_count(id)
+    # Gọi hàm chuẩn bị add_count từ module add_count
+    print(f"\n🔄 Đang chuẩn bị request tăng count...")
+    success, message, data = add_count.prepare_add_count(id)
     
     print(f"📊 Kết quả: {message}")
     if data:
@@ -518,36 +519,239 @@ def add_count_endpoint():
         return response, status_code
 
 
+@app.route('/verify_count', methods=['POST'])
+def verify_count_endpoint():
+    """
+    API endpoint để verify và thực hiện hoặc hủy request add_count
+
+    Body JSON format:
+    {
+        "request_id": "uuid-string",  // ID của request cần verify
+        "approved": true/false        // true: thực hiện add_count, false: hủy request
+    }
+
+    Returns:
+        - 200: Verify thành công
+        - 400: Request không hợp lệ
+        - 500: Lỗi server
+    """
+    # Lấy JSON body từ request
+    json_data = request.get_json(silent=True)
+
+    # Print nội dung request ra console
+    print("\n" + "="*60)
+    print("✅ Nhận được request verify_count!")
+    print("="*60)
+    print(f"📋 Method: {request.method}")
+    print(f"📋 URL: {request.url}")
+
+    if json_data:
+        print(f"📋 JSON Body:")
+        print(json.dumps(json_data, ensure_ascii=False, indent=2))
+
+    # Kiểm tra JSON body có tồn tại không
+    if not json_data:
+        print("❌ Không có JSON body trong request")
+        response = jsonify({
+            "success": False,
+            "status_code": 400,
+            "message": "Request phải chứa JSON body"
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        return response, 400
+
+    # Trích xuất request_id và approved từ JSON body
+    request_id = json_data.get('request_id')
+    approved = json_data.get('approved')
+
+    # Kiểm tra trường bắt buộc
+    if request_id is None:
+        print("❌ Thiếu trường 'request_id' trong JSON body")
+        response = jsonify({
+            "success": False,
+            "status_code": 400,
+            "message": "Thiếu trường 'request_id' trong JSON body"
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        return response, 400
+
+    if approved is None:
+        print("❌ Thiếu trường 'approved' trong JSON body")
+        response = jsonify({
+            "success": False,
+            "status_code": 400,
+            "message": "Thiếu trường 'approved' trong JSON body"
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        return response, 400
+
+    # Kiểm tra request_id có phải là string không
+    if not isinstance(request_id, str):
+        print(f"❌ Trường 'request_id' phải là chuỗi, nhận được: {type(request_id).__name__}")
+        response = jsonify({
+            "success": False,
+            "status_code": 400,
+            "message": f"Trường 'request_id' phải là chuỗi, nhận được: {type(request_id).__name__}"
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        return response, 400
+
+    # Kiểm tra approved có phải là boolean không
+    if not isinstance(approved, bool):
+        print(f"❌ Trường 'approved' phải là boolean, nhận được: {type(approved).__name__}")
+        response = jsonify({
+            "success": False,
+            "status_code": 400,
+            "message": f"Trường 'approved' phải là boolean, nhận được: {type(approved).__name__}"
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        return response, 400
+
+    # In thông tin trích xuất được
+    print(f"\n📤 Trích xuất thông tin:")
+    print(f"   • request_id: {request_id}")
+    print(f"   • approved: {approved}")
+
+    # Xử lý theo trạng thái approved
+    if approved:
+        print(f"\n🔄 Đang thực hiện add_count cho request {request_id}...")
+        success, message, data = add_count.execute_add_count(request_id)
+    else:
+        print(f"\n🔄 Đang hủy request {request_id}...")
+        success, message, data = add_count.cancel_pending_request(request_id)
+
+    print(f"📊 Kết quả: {message}")
+    if data:
+        print(f"📋 Dữ liệu: {json.dumps(data, ensure_ascii=False, indent=2)}")
+
+    print("="*60 + "\n")
+
+    # Trả về response
+    if success:
+        response = jsonify({
+            "success": True,
+            "status_code": 200,
+            "message": message,
+            "data": data
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        return response, 200
+    else:
+        response = jsonify({
+            "success": False,
+            "status_code": 400,
+            "message": message,
+            "data": data
+        })
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        return response, 400
+
+
+@app.route('/test', methods=['GET'])
+def test_endpoint():
+    """Endpoint test đơn giản"""
+    return jsonify({"message": "API is working", "status": "ok"}), 200
+
+
+@app.route('/admin-simple', methods=['GET'])
+def admin_simple_endpoint():
+    """Endpoint admin đơn giản để test"""
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <head><title>Admin Simple</title></head>
+    <body>
+        <h1>Admin Page</h1>
+        <p>Server is working!</p>
+    </body>
+    </html>
+    """
+    return Response(html, mimetype='text/html'), 200
+
+
 @app.route('/admin', methods=['GET'])
 def admin_endpoint():
     """
     API endpoint để hiển thị giao diện đăng nhập admin
-    
+
     Returns:
         - 200: Trả về file HTML login.html
         - 404: Không tìm thấy file
     """
     try:
         # Đường dẫn đến file login.html
-        page_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'page')
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        page_dir = os.path.join(current_dir, 'page')
         login_file = os.path.join(page_dir, 'login.html')
-        
-        # Kiểm tra file có tồn tại không
+
+        print(f"🔍 Current dir: {current_dir}")
+        print(f"📁 Page dir: {page_dir}")
+        print(f"📄 Login file: {login_file}")
+        print(f"📋 File exists: {os.path.exists(login_file)}")
+        print(f"📋 Is file: {os.path.isfile(login_file) if os.path.exists(login_file) else 'N/A'}")
+
+        # Kiểm tra thư mục page
+        if not os.path.exists(page_dir):
+            print(f"❌ Thư mục page không tồn tại: {page_dir}")
+            return jsonify({"error": "Page directory not found", "path": page_dir}), 404
+
+        # Kiểm tra file login.html
         if not os.path.exists(login_file):
-            response = jsonify({
-                "success": False,
-                "status_code": 404,
-                "message": "Không tìm thấy file login.html"
-            })
-            return response, 404
-        
-        # Đọc và trả về nội dung HTML
-        with open(login_file, 'r', encoding='utf-8') as f:
-            html_content = f.read()
-        
-        return Response(html_content, mimetype='text/html'), 200
+            print(f"❌ File login.html không tồn tại: {login_file}")
+            # List files trong thư mục page
+            try:
+                files = os.listdir(page_dir)
+                print(f"📋 Files in page dir: {files}")
+            except Exception as e:
+                print(f"❌ Cannot list page dir: {e}")
+
+            return jsonify({
+                "error": "login.html not found",
+                "path": login_file,
+                "page_dir_exists": os.path.exists(page_dir),
+                "files_in_page": os.listdir(page_dir) if os.path.exists(page_dir) else []
+            }), 404
+
+        # Thử đọc file
+        try:
+            with open(login_file, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+
+            print(f"✅ Đã đọc thành công file HTML, độ dài: {len(html_content)} ký tự")
+
+            # Thêm header để disable cache
+            response = Response(html_content, mimetype='text/html')
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+
+            return response, 200
+
+        except UnicodeDecodeError as e:
+            print(f"❌ Lỗi encoding khi đọc file: {e}")
+            return jsonify({"error": f"Encoding error: {str(e)}"}), 500
+
+        except Exception as e:
+            print(f"❌ Lỗi khi đọc file: {e}")
+            return jsonify({"error": f"Read error: {str(e)}"}), 500
     except Exception as e:
         print(f"❌ Lỗi khi đọc file login.html: {e}")
+        import traceback
+        print(f"📋 Traceback: {traceback.format_exc()}")
         response = jsonify({
             "success": False,
             "status_code": 500,

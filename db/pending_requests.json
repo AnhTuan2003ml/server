@@ -1,0 +1,106 @@
+{
+  "20a9f157-e86e-4a93-9846-e463c0162556": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T14:11:01.341162",
+    "status": "completed",
+    "count": 180,
+    "limit": 100000,
+    "completed_at": "2026-01-06T14:11:02.624328"
+  },
+  "03fc610f-3ab8-4a61-a453-a571a95a243d": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T14:11:45.783600",
+    "status": "cancelled",
+    "count": 181,
+    "limit": 100000,
+    "cancelled_at": "2026-01-06T14:11:47.077775"
+  },
+  "7472edad-166e-4fd0-beab-e0cf00159a17": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T14:23:23.463726",
+    "status": "cancelled",
+    "count": 181,
+    "limit": 100000,
+    "cancelled_at": "2026-01-06T14:25:26.647101"
+  },
+  "ff63753a-2e52-4938-bc56-26b2b9df95bd": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T14:23:23.497764",
+    "status": "cancelled",
+    "count": 181,
+    "limit": 100000,
+    "cancelled_at": "2026-01-06T14:25:20.249709"
+  },
+  "081e8d12-2b87-4133-8b90-1deadd2b5a95": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T14:23:23.679891",
+    "status": "cancelled",
+    "count": 181,
+    "limit": 100000,
+    "cancelled_at": "2026-01-06T14:25:25.401644"
+  },
+  "eeb7e1c9-395c-4840-b9e2-477acc654c8f": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T14:25:12.203081",
+    "status": "cancelled",
+    "count": 181,
+    "limit": 100000,
+    "cancelled_at": "2026-01-06T14:25:18.869686"
+  },
+  "25acc0af-a284-4374-a27f-b2b9c2c170cf": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T14:25:17.572759",
+    "status": "cancelled",
+    "count": 181,
+    "limit": 100000,
+    "cancelled_at": "2026-01-06T14:25:24.071346"
+  },
+  "c1770ed7-90eb-4eb1-898f-c4178ffbd400": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T14:25:18.725934",
+    "status": "cancelled",
+    "count": 181,
+    "limit": 100000,
+    "cancelled_at": "2026-01-06T14:25:25.206165"
+  },
+  "59949f56-711f-4118-bb90-abb7d94a6d8e": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T14:25:41.125561",
+    "status": "cancelled",
+    "count": 181,
+    "limit": 100000,
+    "cancelled_at": "2026-01-06T14:28:04.497106"
+  },
+  "36832c2a-0b4f-4ce1-9d08-5f5164591791": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T14:25:41.252942",
+    "status": "cancelled",
+    "count": 181,
+    "limit": 100000,
+    "cancelled_at": "2026-01-06T14:27:52.579016"
+  },
+  "fcc1c079-2d50-4955-b4c0-8065ebf3f661": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T14:27:44.483596",
+    "status": "cancelled",
+    "count": 181,
+    "limit": 100000,
+    "cancelled_at": "2026-01-06T14:27:51.380453"
+  },
+  "a6d685d3-62df-4611-917a-87bda9cdc423": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T14:27:56.061202",
+    "status": "cancelled",
+    "count": 181,
+    "limit": 100000,
+    "cancelled_at": "2026-01-06T14:28:03.042700"
+  },
+  "5db2484d-85a5-40ed-b0f5-5d27500d413a": {
+    "id": "hxPyj6t9OYSnpmL20ixm",
+    "timestamp": "2026-01-06T15:44:03.366365",
+    "status": "completed",
+    "count": 181,
+    "limit": 100000,
+    "completed_at": "2026-01-06T15:50:04.010808"
+  }
+}
