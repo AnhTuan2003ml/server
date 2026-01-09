@@ -1,0 +1,17 @@
+tunnel: 0d4508c4-07d7-4c52-a326-b780af588184
+credentials-file: C:\Users\pc\.cloudflared\0d4508c4-07d7-4c52-a326-b780af588184.json
+
+ingress:
+  - hostname: web.nanoproai.shop
+    service: http://localhost:3000
+
+  - hostname: api.nanoproai.shop
+    service: http://localhost:5000
+
+  - hostname: recaptcha.nanoproai.shop
+    service: http://localhost:5001
+
+  - hostname: tool.nanoproai.shop
+    service: http://localhost:5002
+
+  - service: http_status:404

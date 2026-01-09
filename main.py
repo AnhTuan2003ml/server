@@ -2038,7 +2038,7 @@ def main():
     """
     Main function để khởi động Flask API service
     """
-    port = 5000
+    port = 5002
     local_ip = lay_ip_local()
     
     # In thông tin API
